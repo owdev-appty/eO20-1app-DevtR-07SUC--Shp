@@ -77,9 +77,15 @@
   .form-mode-banner button{background:none;border:none;color:var(--accent-text);text-decoration:underline;font-size:13px;cursor:pointer;padding:0;}
 
   label{font-size:13px;color:var(--text-secondary);display:block;margin-bottom:5px;}
-  input[type=date], input[type=time], input[type=text], input[type=number], textarea{
+  input[type=date], input[type=time], input[type=text], input[type=number], select, textarea{
     width:100%;padding:9px 10px;border:1px solid var(--border);border-radius:var(--radius);
     font-size:14px;background:var(--surface);color:var(--text);font-family:inherit;
+  }
+  select{
+    -webkit-appearance:none;appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235C6470' stroke-width='2'><polyline points='6 9 12 15 18 9'/></svg>");
+    background-repeat:no-repeat;background-position:right 10px center;background-size:16px;
+    padding-right:32px;
   }
   textarea{resize:vertical;}
   .row{display:flex;gap:10px;}
@@ -175,11 +181,19 @@
       </div>
       <div class="field">
         <label>時間</label>
-        <input type="time" id="f-time">
+        <input type="text" inputmode="numeric" pattern="[0-9]*" id="f-time" placeholder="例: 930">
       </div>
       <div class="field">
         <label>場所</label>
-        <input type="text" id="f-place">
+        <select id="f-place">
+          <option value="" disabled selected>選択してください</option>
+          <option value="ソファー">ソファー</option>
+          <option value="デスク">デスク</option>
+          <option value="キッチン">キッチン</option>
+          <option value="お店">お店</option>
+          <option value="外">外</option>
+          <option value="友人宅">友人宅</option>
+        </select>
       </div>
       <div class="field">
         <label>食事・飲み物の内容</label>
@@ -274,6 +288,59 @@
 
   document.getElementById('f-date').value = todayStr();
   document.getElementById('f-time').value = '00:00';
+
+  // ---- 時間欄: 数字を入力すると自動でHH:MMに変換 ----
+  let timeBuffer = '';
+  let timeBeforeEdit = '';
+  const timeField = document.getElementById('f-time');
+
+  function updateTimeDisplay(){
+    const d = timeBuffer;
+    if(d.length===0){ timeField.value=''; return; }
+    if(d.length<=2){ timeField.value = d; return; }
+    const minutes = d.slice(-2);
+    const hours = d.slice(0, d.length-2);
+    timeField.value = hours + ':' + minutes;
+  }
+  function finalizeTime(){
+    const d = timeBuffer;
+    if(d.length===0){
+      timeField.value = timeBeforeEdit;
+      return;
+    }
+    let hoursStr, minutesStr;
+    if(d.length<=2){ hoursStr = d; minutesStr = '00'; }
+    else { minutesStr = d.slice(-2); hoursStr = d.slice(0, d.length-2); }
+    let hours = parseInt(hoursStr, 10);
+    let minutes = parseInt(minutesStr, 10);
+    if(isNaN(hours)) hours = 0;
+    if(isNaN(minutes)) minutes = 0;
+    if(hours > 23) hours = 23;
+    if(minutes > 59) minutes = 59;
+    timeField.value = String(hours).padStart(2,'0') + ':' + String(minutes).padStart(2,'0');
+    timeBuffer = '';
+  }
+  timeField.addEventListener('focus', function(){
+    timeBeforeEdit = this.value;
+    timeBuffer = '';
+    this.value = '';
+  });
+  timeField.addEventListener('keydown', function(e){
+    if(e.key >= '0' && e.key <= '9'){
+      e.preventDefault();
+      if(timeBuffer.length < 4){ timeBuffer += e.key; }
+      updateTimeDisplay();
+    } else if(e.key === 'Backspace'){
+      e.preventDefault();
+      timeBuffer = timeBuffer.slice(0, -1);
+      updateTimeDisplay();
+    } else if(e.key === 'Tab' || e.key === 'Enter'){
+      // 確定操作はそのまま許可
+    } else {
+      e.preventDefault();
+    }
+  });
+  timeField.addEventListener('blur', finalizeTime);
 
   const views = { record: document.getElementById('view-record'), list: document.getElementById('view-list'), review: document.getElementById('view-review') };
   const tabs = { record: document.getElementById('tab-record'), list: document.getElementById('tab-list'), review: document.getElementById('tab-review') };
