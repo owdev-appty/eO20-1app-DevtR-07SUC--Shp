@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>食事セルフモニタリング</title>
+<style>
+  :root{
+    --bg: #F5F7FA;
+    --surface: #FFFFFF;
+    --surface-2: #EAEFF5;
+    --text: #23262B;
+    --text-secondary: #5C6470;
+    --text-muted: #98A0AC;
+    --border: #DCE3EC;
+    --border-strong: #C2CCDA;
+    --accent: #3D6FA6;
+    --accent-bg: #E2ECF6;
+    --accent-text: #244A73;
+    --warn: #B98D3E;
+    --warn-bg: #F5EAD6;
+    --warn-text: #7A5C22;
+    --danger: #B0473F;
+    --danger-bg: #F7E4E1;
+    --radius: 10px;
+    --radius-lg: 16px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg: #14171C;
+      --surface: #1D2127;
+      --surface-2: #262B33;
+      --text: #E8EAED;
+      --text-secondary: #A6ADB8;
+      --text-muted: #767E8A;
+      --border: #30353E;
+      --border-strong: #454C58;
+      --accent: #6FA0D6;
+      --accent-bg: #1F2E40;
+      --accent-text: #9EC3EC;
+      --warn: #D9AE63;
+      --warn-bg: #3A2F1B;
+      --warn-text: #E8C685;
+      --danger: #E08079;
+      --danger-bg: #3A201E;
+    }
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .app{max-width:480px;margin:0 auto;padding:1.25rem 1rem 3rem;}
+  header{margin-bottom:1.25rem;}
+  header h1{font-size:19px;font-weight:600;margin:0;}
+
+  .tabs{display:flex;gap:6px;margin-bottom:1.25rem;}
+  .tab{
+    flex:1;padding:11px 4px;font-size:14px;text-align:center;
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    cursor:pointer;color:var(--text);transition:.15s;
+  }
+  .tab.active{border-color:var(--accent);color:var(--accent-text);background:var(--accent-bg);font-weight:600;}
+
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.2rem;margin-bottom:1rem;}
+
+  .form-mode-banner{display:none;align-items:center;justify-content:space-between;background:var(--accent-bg);color:var(--accent-text);font-size:13px;padding:8px 12px;border-radius:var(--radius);margin-bottom:12px;}
+  .form-mode-banner button{background:none;border:none;color:var(--accent-text);text-decoration:underline;font-size:13px;cursor:pointer;padding:0;}
+
+  label{font-size:13px;color:var(--text-secondary);display:block;margin-bottom:5px;}
+  input[type=date], input[type=time], input[type=text], input[type=number], textarea{
+    width:100%;padding:9px 10px;border:1px solid var(--border);border-radius:var(--radius);
+    font-size:14px;background:var(--surface);color:var(--text);font-family:inherit;
+  }
+  textarea{resize:vertical;}
+  .row{display:flex;gap:10px;}
+  .row > div{flex:1;}
+  .field{margin-bottom:14px;}
+  .checkbox-row{display:flex;align-items:center;gap:9px;font-size:14px;margin-bottom:18px;cursor:pointer;}
+  .checkbox-row input{width:18px;height:18px;}
+
+  button.btn{
+    width:100%;padding:12px;font-size:14px;font-weight:600;border-radius:var(--radius);
+    border:1px solid var(--border-strong);background:var(--surface);color:var(--text);cursor:pointer;
+  }
+  button.btn:active{transform:scale(0.98);}
+  button.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .save-msg{font-size:13px;text-align:center;margin:8px 0 0;height:16px;color:var(--accent-text);}
+
+  .cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+  .cal-head button{background:none;border:none;font-size:16px;color:var(--text);cursor:pointer;padding:4px 10px;}
+  .cal-label{font-size:14px;font-weight:600;}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+  .cal-dow{text-align:center;font-size:11px;color:var(--text-muted);padding:2px 0;}
+  .cal-dow.sun{color:var(--danger);}
+  .cal-dow.sat{color:var(--accent);}
+  .cal-day{
+    padding:6px 0 4px;font-size:13px;text-align:center;border-radius:var(--radius);
+    border:1px solid transparent;background:none;cursor:pointer;color:var(--text);
+  }
+  .cal-day.sun{background:var(--danger-bg);color:var(--danger);}
+  .cal-day.sat{background:var(--accent-bg);color:var(--accent-text);}
+  .cal-day.today{border-color:var(--accent);}
+  .cal-day.selected{background:var(--accent);color:#fff;font-weight:600;}
+  .cal-dot{width:4px;height:4px;border-radius:50%;margin:2px auto 0;background:var(--border-strong);}
+  .cal-dot.over{background:var(--warn);}
+  .cal-day.selected .cal-dot{background:#fff;}
+
+  .filter-bar{display:none;align-items:center;justify-content:space-between;margin-bottom:8px;font-size:13px;color:var(--text-secondary);}
+  .filter-bar button{background:none;border:1px solid var(--border-strong);border-radius:var(--radius);padding:4px 10px;font-size:12px;color:var(--text);cursor:pointer;}
+
+  .empty{text-align:center;color:var(--text-muted);font-size:14px;padding:2.5rem 0;}
+  .day-group{margin-bottom:1rem;}
+  .day-label{font-size:13px;font-weight:600;color:var(--text-secondary);margin:0 0 5px;}
+  .entry-list{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:0 1rem;}
+  .entry{border-bottom:1px solid var(--border);padding:11px 0;}
+  .entry:last-child{border-bottom:none;}
+  .entry-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;}
+  .entry-time{font-size:13px;color:var(--text-muted);}
+  .entry-food{font-size:14px;margin:4px 0 0;}
+  .entry-feel{font-size:13px;color:var(--text-secondary);margin:4px 0 0;}
+  .entry-weight{font-size:12px;color:var(--text-muted);margin:4px 0 0;}
+  .badge{background:var(--warn-bg);color:var(--warn-text);font-size:11px;padding:2px 9px;border-radius:20px;white-space:nowrap;}
+  .entry-actions{display:flex;gap:10px;flex-shrink:0;align-items:center;}
+  .entry-actions button{background:none;border:none;font-size:12px;color:var(--text-secondary);text-decoration:underline;cursor:pointer;padding:0;}
+  .entry-actions button.delete{color:var(--danger);}
+
+  .review-loading{text-align:center;color:var(--text-muted);font-size:14px;padding:1.75rem 0;display:none;}
+  .review-result{display:none;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem;font-size:14px;line-height:1.75;color:var(--text);margin-bottom:1rem;}
+  .review-result p{margin:0 0 0.85em;}
+  .review-result p:last-child{margin-bottom:0;}
+  .review-error{display:none;background:var(--danger-bg);color:var(--danger);font-size:13px;padding:1rem;border-radius:var(--radius);white-space:pre-wrap;}
+  .sep{color:var(--text-muted);font-size:13px;}
+
+  .history-section{margin-top:1.5rem;}
+  .history-title{font-size:14px;font-weight:600;color:var(--text-secondary);margin:0 0 8px;}
+  .past-reflection{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:10px;overflow:hidden;}
+  .past-reflection summary{padding:12px 14px;font-size:13px;cursor:pointer;color:var(--text-secondary);list-style:none;display:flex;justify-content:space-between;align-items:center;}
+  .past-reflection summary::-webkit-details-marker{display:none;}
+  .past-reflection .body{padding:0 14px 14px;font-size:14px;line-height:1.7;}
+  .past-reflection .body p{margin:0 0 0.75em;}
+  .past-reflection .del{background:none;border:none;color:var(--danger);font-size:12px;text-decoration:underline;cursor:pointer;}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>食事セルフモニタリング</h1>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" id="tab-record">Entry</div>
+    <div class="tab" id="tab-list">History</div>
+    <div class="tab" id="tab-review">Reflect</div>
+  </div>
+
+  <div id="view-record">
+    <div class="form-mode-banner" id="edit-banner">
+      <span>この記録を編集しています</span>
+      <button id="btn-cancel-edit">キャンセル</button>
+    </div>
+    <div class="card">
+      <div class="field">
+        <label>日付</label>
+        <input type="date" id="f-date">
+      </div>
+      <div class="row field">
+        <div>
+          <label>時間</label>
+          <input type="time" id="f-time">
+        </div>
+        <div>
+          <label>場所</label>
+          <input type="text" id="f-place" placeholder="キッチン">
+        </div>
+      </div>
+      <div class="field">
+        <label>食事・飲み物の内容</label>
+        <textarea id="f-food" rows="2" placeholder="ヨーグルトと果物"></textarea>
+      </div>
+      <div class="field">
+        <label>状況・気持ち（任意）</label>
+        <textarea id="f-feel" rows="2" placeholder="出かける前に少し食べ過ぎた気がする"></textarea>
+      </div>
+      <div class="field">
+        <label>朝の体重 kg（任意）</label>
+        <input type="number" id="f-weight" step="0.1" min="0" placeholder="例: 58.4">
+      </div>
+      <label class="checkbox-row">
+        <input type="checkbox" id="f-over">
+        ⚠️ 食べ過ぎた
+      </label>
+      <button class="btn primary" id="btn-save">SAVE</button>
+      <p class="save-msg" id="save-msg"></p>
+    </div>
+  </div>
+
+  <div id="view-list" style="display:none;">
+    <div class="card">
+      <div class="cal-head">
+        <button id="cal-prev" aria-label="前の月">‹</button>
+        <span class="cal-label" id="cal-label"></span>
+        <button id="cal-next" aria-label="次の月">›</button>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+    </div>
+    <div class="filter-bar" id="filter-bar">
+      <span id="filter-label"></span>
+      <button id="btn-clear-filter">すべて表示</button>
+    </div>
+    <div class="empty" id="list-empty" style="display:none;">まだ記録がありません。「Entry」から最初の一件を追加してください。</div>
+    <div id="list-content"></div>
+  </div>
+
+  <div id="view-review" style="display:none;">
+    <div class="card">
+      <label>振り返る期間</label>
+      <div class="row" style="align-items:center;margin-bottom:14px;">
+        <div><input type="date" id="r-from"></div>
+        <span class="sep">〜</span>
+        <div><input type="date" id="r-to"></div>
+      </div>
+      <button class="btn primary" id="btn-review">✦ この期間を振り返る</button>
+    </div>
+    <div class="review-loading" id="review-loading">記録を読み込んで、傾向をまとめています…</div>
+    <div class="review-result" id="review-result"></div>
+    <div class="review-error" id="review-error"></div>
+
+    <div class="history-section">
+      <p class="history-title">過去のReflect結果</p>
+      <div class="empty" id="reflections-empty" style="display:none;padding:1.5rem 0;">まだ保存された振り返りはありません。</div>
+      <div id="reflections-list"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const STORAGE_KEY = 'diet-monitoring-entries';
+  const REFLECTIONS_KEY = 'diet-monitoring-reflections';
+  let entries = [];
+  let reflections = [];
+  let calMonth = new Date();
+  calMonth.setDate(1);
+  let selectedDate = null;
+  let editingId = null;
+
+  function todayStr(){
+    const d = new Date();
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+  function dstr(y,m,day){
+    return y+'-'+String(m+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');
+  }
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function formatDate(d){
+    const p = d.split('-');
+    if(p.length!==3) return d;
+    return p[0]+'年'+parseInt(p[1])+'月'+parseInt(p[2])+'日';
+  }
+  function lastUsedTime(){
+    if(entries.length===0) return '00:00';
+    return entries[entries.length-1].time || '00:00';
+  }
+
+  document.getElementById('f-date').value = todayStr();
+  document.getElementById('f-time').value = '00:00';
+
+  const views = { record: document.getElementById('view-record'), list: document.getElementById('view-list'), review: document.getElementById('view-review') };
+  const tabs = { record: document.getElementById('tab-record'), list: document.getElementById('tab-list'), review: document.getElementById('tab-review') };
+
+  function showTab(name){
+    Object.keys(views).forEach(k=>{
+      views[k].style.display = (k===name) ? 'block' : 'none';
+      tabs[k].classList.toggle('active', k===name);
+    });
+    if(name==='list'){ renderCalendar(); renderList(); }
+    if(name==='review'){ renderReflections(); }
+  }
+  tabs.record.onclick = ()=>showTab('record');
+  tabs.list.onclick = ()=>showTab('list');
+  tabs.review.onclick = ()=>showTab('review');
+
+  async function loadEntries(){
+    try{
+      const res = await window.storage.get(STORAGE_KEY, false);
+      entries = res && res.value ? JSON.parse(res.value) : [];
+    }catch(e){ entries = []; }
+  }
+  async function saveEntries(){
+    await window.storage.set(STORAGE_KEY, JSON.stringify(entries), false);
+  }
+  async function loadReflections(){
+    try{
+      const res = await window.storage.get(REFLECTIONS_KEY, false);
+      reflections = res && res.value ? JSON.parse(res.value) : [];
+    }catch(e){ reflections = []; }
+  }
+  async function saveReflections(){
+    await window.storage.set(REFLECTIONS_KEY, JSON.stringify(reflections), false);
+  }
+
+  function resetFormMode(){
+    editingId = null;
+    document.getElementById('edit-banner').style.display = 'none';
+    document.getElementById('btn-save').textContent = 'SAVE';
+  }
+  document.getElementById('btn-cancel-edit').onclick = function(){
+    resetFormMode();
+    document.getElementById('f-date').value = todayStr();
+    document.getElementById('f-time').value = lastUsedTime();
+    document.getElementById('f-place').value = '';
+    document.getElementById('f-food').value = '';
+    document.getElementById('f-feel').value = '';
+    document.getElementById('f-weight').value = '';
+    document.getElementById('f-over').checked = false;
+  };
+
+  function fillForm(entry){
+    document.getElementById('f-date').value = entry.date;
+    document.getElementById('f-time').value = entry.time;
+    document.getElementById('f-place').value = entry.place;
+    document.getElementById('f-food').value = entry.food;
+    document.getElementById('f-feel').value = entry.feel;
+    document.getElementById('f-weight').value = entry.weight != null ? entry.weight : '';
+    document.getElementById('f-over').checked = entry.over;
+  }
+
+  function startEdit(id){
+    const entry = entries.find(e=>e.id===id);
+    if(!entry) return;
+    editingId = id;
+    fillForm(entry);
+    document.getElementById('edit-banner').style.display = 'flex';
+    document.getElementById('btn-save').textContent = 'UPDATE';
+    showTab('record');
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
+
+  async function deleteEntry(id){
+    entries = entries.filter(e=>e.id!==id);
+    await saveEntries();
+    renderCalendar();
+    renderList();
+  }
+
+  document.getElementById('btn-save').onclick = async function(){
+    const date = document.getElementById('f-date').value || todayStr();
+    const time = document.getElementById('f-time').value || '00:00';
+    const place = document.getElementById('f-place').value || '';
+    const food = document.getElementById('f-food').value || '';
+    const feel = document.getElementById('f-feel').value || '';
+    const weightRaw = document.getElementById('f-weight').value;
+    const weight = weightRaw !== '' ? parseFloat(weightRaw) : null;
+    const over = document.getElementById('f-over').checked;
+    const msg = document.getElementById('save-msg');
+
+    if(!food.trim()){
+      msg.style.color = 'var(--danger)';
+      msg.textContent = '食事内容を入力してください';
+      return;
+    }
+
+    if(editingId){
+      const idx = entries.findIndex(e=>e.id===editingId);
+      if(idx !== -1){
+        entries[idx] = { id: editingId, date, time, place, food, feel, weight, over };
+      }
+      await saveEntries();
+      resetFormMode();
+      msg.style.color = 'var(--accent-text)';
+      msg.textContent = '更新しました';
+    } else {
+      entries.push({ id: Date.now().toString(36), date, time, place, food, feel, weight, over });
+      await saveEntries();
+      msg.style.color = 'var(--accent-text)';
+      msg.textContent = '保存しました';
+    }
+
+    document.getElementById('f-food').value = '';
+    document.getElementById('f-feel').value = '';
+    document.getElementById('f-weight').value = '';
+    document.getElementById('f-over').checked = false;
+    document.getElementById('f-time').value = lastUsedTime();
+    setTimeout(()=>{ msg.textContent=''; }, 2000);
+  };
+
+  function renderCalendar(){
+    const y = calMonth.getFullYear(), m = calMonth.getMonth();
+    document.getElementById('cal-label').textContent = y+'年'+(m+1)+'月';
+    const first = new Date(y,m,1);
+    const startOffset = first.getDay();
+    const daysInMonth = new Date(y,m+1,0).getDate();
+    const hasEntry = {}, hasOver = {};
+    entries.forEach(e=>{ hasEntry[e.date]=true; if(e.over) hasOver[e.date]=true; });
+    const grid = document.getElementById('cal-grid');
+    let html = '';
+    ['日','月','火','水','木','金','土'].forEach((w,i)=>{
+      const cls = i===0 ? ' sun' : (i===6 ? ' sat' : '');
+      html += '<div class="cal-dow'+cls+'">'+w+'</div>';
+    });
+    for(let i=0;i<startOffset;i++){ html += '<div></div>'; }
+    for(let day=1;day<=daysInMonth;day++){
+      const ds = dstr(y,m,day);
+      const dow = new Date(y,m,day).getDay();
+      const cls = ['cal-day'];
+      if(dow===0) cls.push('sun');
+      if(dow===6) cls.push('sat');
+      if(ds===todayStr()) cls.push('today');
+      if(ds===selectedDate) cls.push('selected');
+      const dot = hasEntry[ds] ? '<div class="cal-dot'+(hasOver[ds]?' over':'')+'"></div>' : '<div style="height:6px;"></div>';
+      html += '<button class="'+cls.join(' ')+'" data-date="'+ds+'">'+day+dot+'</button>';
+    }
+    grid.innerHTML = html;
+    grid.querySelectorAll('.cal-day').forEach(btn=>{
+      btn.onclick = ()=>{
+        const ds = btn.getAttribute('data-date');
+        selectedDate = (selectedDate === ds) ? null : ds;
+        renderCalendar();
+        renderList();
+      };
+    });
+  }
+  document.getElementById('cal-prev').onclick = ()=>{ calMonth.setMonth(calMonth.getMonth()-1); renderCalendar(); };
+  document.getElementById('cal-next').onclick = ()=>{ calMonth.setMonth(calMonth.getMonth()+1); renderCalendar(); };
+  document.getElementById('btn-clear-filter').onclick = ()=>{ selectedDate = null; renderCalendar(); renderList(); };
+
+  function renderList(){
+    const empty = document.getElementById('list-empty');
+    const content = document.getElementById('list-content');
+    const filterBar = document.getElementById('filter-bar');
+    const filterLabel = document.getElementById('filter-label');
+
+    if(entries.length===0){
+      empty.style.display = 'block';
+      content.innerHTML = '';
+      filterBar.style.display = 'none';
+      return;
+    }
+    empty.style.display = 'none';
+
+    const source = selectedDate ? entries.filter(e=>e.date===selectedDate) : entries;
+
+    if(selectedDate){
+      filterBar.style.display = 'flex';
+      filterLabel.textContent = formatDate(selectedDate)+'の記録（'+source.length+'件）';
+    } else {
+      filterBar.style.display = 'none';
+    }
+
+    if(source.length===0){
+      content.innerHTML = '<p class="empty">この日の記録はありません。</p>';
+      return;
+    }
+
+    const byDate = {};
+    source.slice().sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time)).forEach(e=>{
+      byDate[e.date] = byDate[e.date] || [];
+      byDate[e.date].push(e);
+    });
+    const dates = Object.keys(byDate).sort().reverse();
+    content.innerHTML = dates.map(date=>{
+      const items = byDate[date].map(e=>{
+        const overBadge = e.over ? '<span class="badge">⚠️ 食べ過ぎ</span>' : '';
+        const feel = e.feel ? '<p class="entry-feel">'+escapeHtml(e.feel)+'</p>' : '';
+        const weight = (e.weight !== null && e.weight !== undefined && e.weight !== '') ? '<p class="entry-weight">体重: '+e.weight+' kg</p>' : '';
+        const place = e.place ? ' · '+escapeHtml(e.place) : '';
+        return '<div class="entry" data-id="'+e.id+'">'
+          +'<div class="entry-top">'
+            +'<span class="entry-time">'+escapeHtml(e.time)+place+'</span>'
+            +'<div class="entry-actions">'+overBadge+'<button class="edit" data-id="'+e.id+'">編集</button><button class="delete" data-id="'+e.id+'">削除</button></div>'
+          +'</div>'
+          +'<p class="entry-food">'+escapeHtml(e.food)+'</p>'
+          +feel+weight
+          +'</div>';
+      }).join('');
+      return '<div class="day-group">'
+        +(selectedDate ? '' : '<p class="day-label">'+formatDate(date)+'</p>')
+        +'<div class="entry-list">'+items+'</div></div>';
+    }).join('');
+
+    content.querySelectorAll('button.edit').forEach(btn=>{
+      btn.onclick = ()=> startEdit(btn.getAttribute('data-id'));
+    });
+    content.querySelectorAll('button.delete').forEach(btn=>{
+      btn.onclick = ()=>{
+        if(confirm('この記録を削除しますか？')){
+          deleteEntry(btn.getAttribute('data-id'));
+        }
+      };
+    });
+  }
+
+  const rFrom = document.getElementById('r-from');
+  const rTo = document.getElementById('r-to');
+  rTo.value = todayStr();
+  const weekAgo = new Date();
+  weekAgo.setDate(weekAgo.getDate()-6);
+  rFrom.value = weekAgo.getFullYear()+'-'+String(weekAgo.getMonth()+1).padStart(2,'0')+'-'+String(weekAgo.getDate()).padStart(2,'0');
+
+  function renderReflections(){
+    const empty = document.getElementById('reflections-empty');
+    const list = document.getElementById('reflections-list');
+    if(reflections.length===0){
+      empty.style.display = 'block';
+      list.innerHTML = '';
+      return;
+    }
+    empty.style.display = 'none';
+    const sorted = reflections.slice().sort((a,b)=> b.createdAt.localeCompare(a.createdAt));
+    list.innerHTML = sorted.map(r=>{
+      const bodyHtml = r.text.split('\n').filter(Boolean).map(p=>'<p>'+escapeHtml(p)+'</p>').join('');
+      return '<details class="past-reflection" data-id="'+r.id+'">'
+        +'<summary>'+formatDate(r.from)+' 〜 '+formatDate(r.to)+'<button class="del" data-id="'+r.id+'">削除</button></summary>'
+        +'<div class="body">'+bodyHtml+'</div>'
+        +'</details>';
+    }).join('');
+    list.querySelectorAll('button.del').forEach(btn=>{
+      btn.addEventListener('click', async function(ev){
+        ev.preventDefault();
+        ev.stopPropagation();
+        const id = btn.getAttribute('data-id');
+        reflections = reflections.filter(r=>r.id!==id);
+        await saveReflections();
+        renderReflections();
+      });
+    });
+  }
+
+  document.getElementById('btn-review').onclick = async function(){
+    const from = rFrom.value, to = rTo.value;
+    const loading = document.getElementById('review-loading');
+    const result = document.getElementById('review-result');
+    const errBox = document.getElementById('review-error');
+    result.style.display = 'none'; result.innerHTML = '';
+    errBox.style.display = 'none'; errBox.textContent = '';
+
+    if(!from || !to){
+      errBox.style.display = 'block';
+      errBox.textContent = '期間を指定してください。';
+      return;
+    }
+    const inRange = entries.filter(e=> e.date >= from && e.date <= to);
+    if(inRange.length===0){
+      errBox.style.display = 'block';
+      errBox.textContent = 'この期間の記録がありません。記録日: '+(entries.map(e=>e.date).join(', ')||'なし');
+      return;
+    }
+    loading.style.display = 'block';
+    const lines = inRange.slice().sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time))
+      .map(e=> e.date+' '+e.time+' | '+(e.place||'場所不明')+' | '+e.food+(e.over?' [食べ過ぎと感じた]':'')+(e.feel?' | 状況: '+e.feel:'')+((e.weight!==null&&e.weight!==undefined)?' | 体重: '+e.weight+'kg':''))
+      .join('\n');
+
+    const prompt = '以下は個人の食事セルフモニタリング記録です（'+from+'〜'+to+'）。ダイエット（減量・食習慣改善）を目的とした記録です。体重の記録がある場合は参考情報として扱ってください。\n\n'
+      +lines+'\n\n'
+      +'この記録を読んで、日本語で振り返りをまとめてください。トーンは「率直で遠慮がない」ものにしてください。事実から目を逸らさせない厳しさを持たせつつ、人格を否定するような言葉は使わないでください。含める内容:\n'
+      +'1. 傾向: 曜日・時間帯・場所によるパターン、繰り返されている理由付けなど、記録から読み取れる事実\n'
+      +'2. ダイエットの観点での評価: 「この頻度の間食は減量ペースを鈍らせやすい」のように、行動が目標にどう影響するかを機能面ではっきり指摘してよい\n'
+      +'3. 具体的なアドバイス: 次の期間に向けた実践的な提案を1〜2個\n'
+      +'厳守事項:\n'
+      +'- 「意志が弱い」「だらしない」など、人格・性格への評価はしない。あくまで行動とその結果の話にとどめる\n'
+      +'- 医師・カウンセラー・専門家への相談を勧める文言は含めない\n'
+      +'- 「べき」「我慢が足りない」といった精神論ではなく、行動と結果の因果関係として述べる\n'
+      +'- 体重の増減そのものへの一喜一憂を煽らない。体重は文脈情報として触れる程度にとどめる\n'
+      +'- 数字や頻度など、データをぼかさずはっきり示す\n'
+      +'- 慰めや過度な共感で終わらせず、直球で核心を突く\n'
+      +'- 400〜500字程度、箇条書きは使わず自然な文章で';
+
+    try{
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 1000,
+          messages: [{ role: 'user', content: prompt }]
+        })
+      });
+      if(!response.ok){
+        let bodyText = '';
+        try{ bodyText = await response.text(); }catch(_e){}
+        throw new Error('APIエラー(status '+response.status+'): '+bodyText.slice(0,300));
+      }
+      const data = await response.json();
+      if(data.error){ throw new Error('APIエラー: '+(data.error.message||JSON.stringify(data.error))); }
+      const text = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('\n').trim();
+      loading.style.display = 'none';
+      if(!text){ throw new Error('応答からテキストを取得できませんでした。'); }
+      result.style.display = 'block';
+      result.innerHTML = text.split('\n').filter(Boolean).map(p=>'<p>'+escapeHtml(p)+'</p>').join('');
+
+      reflections.push({ id: Date.now().toString(36), from, to, text, createdAt: new Date().toISOString() });
+      await saveReflections();
+      renderReflections();
+    }catch(e){
+      loading.style.display = 'none';
+      errBox.style.display = 'block';
+      errBox.textContent = '振り返りの生成に失敗しました。\n'+(e && e.message ? e.message : String(e));
+    }
+  };
+
+  Promise.all([loadEntries(), loadReflections()]).then(()=>{
+    document.getElementById('f-time').value = lastUsedTime();
+    renderCalendar();
+  });
+})();
+</script>
+</body>
+</html>
