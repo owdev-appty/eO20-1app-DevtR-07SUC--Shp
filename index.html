@@ -191,7 +191,7 @@
       </div>
       <label class="checkbox-row">
         <input type="checkbox" id="f-over">
-        食べ過ぎた⚠️
+        ⚠️ 食べ過ぎた
       </label>
       <button class="btn primary" id="btn-save">SAVE</button>
       <p class="save-msg" id="save-msg"></p>
@@ -288,21 +288,29 @@
 
   async function loadEntries(){
     try{
-      const res = await window.storage.get(STORAGE_KEY, false);
-      entries = res && res.value ? JSON.parse(res.value) : [];
+      const raw = localStorage.getItem(STORAGE_KEY);
+      entries = raw ? JSON.parse(raw) : [];
     }catch(e){ entries = []; }
   }
   async function saveEntries(){
-    await window.storage.set(STORAGE_KEY, JSON.stringify(entries), false);
+    try{
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+    }catch(e){
+      alert('保存に失敗しました。ブラウザのストレージ容量やプライベートモードの設定を確認してください。');
+    }
   }
   async function loadReflections(){
     try{
-      const res = await window.storage.get(REFLECTIONS_KEY, false);
-      reflections = res && res.value ? JSON.parse(res.value) : [];
+      const raw = localStorage.getItem(REFLECTIONS_KEY);
+      reflections = raw ? JSON.parse(raw) : [];
     }catch(e){ reflections = []; }
   }
   async function saveReflections(){
-    await window.storage.set(REFLECTIONS_KEY, JSON.stringify(reflections), false);
+    try{
+      localStorage.setItem(REFLECTIONS_KEY, JSON.stringify(reflections));
+    }catch(e){
+      alert('保存に失敗しました。ブラウザのストレージ容量やプライベートモードの設定を確認してください。');
+    }
   }
 
   function resetFormMode(){
@@ -466,7 +474,7 @@
     const dates = Object.keys(byDate).sort().reverse();
     content.innerHTML = dates.map(date=>{
       const items = byDate[date].map(e=>{
-        const overBadge = e.over ? '<span class="badge">⚠️ 食べ過ぎ</span>' : '';
+        const overBadge = e.over ? '<span class="badge">食べ過ぎ⚠️</span>' : '';
         const feel = e.feel ? '<p class="entry-feel">'+escapeHtml(e.feel)+'</p>' : '';
         const weight = (e.weight !== null && e.weight !== undefined && e.weight !== '') ? '<p class="entry-weight">体重: '+e.weight+' kg</p>' : '';
         const place = e.place ? ' · '+escapeHtml(e.place) : '';
