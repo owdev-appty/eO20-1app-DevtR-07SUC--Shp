@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -167,27 +168,25 @@
         <label>日付</label>
         <input type="date" id="f-date">
       </div>
-      <div class="row field">
-        <div>
-          <label>時間</label>
-          <input type="time" id="f-time">
-        </div>
-        <div>
-          <label>場所</label>
-          <input type="text" id="f-place" placeholder="キッチン">
-        </div>
+      <div class="field">
+        <label>時間</label>
+        <input type="time" id="f-time">
+      </div>
+      <div class="field">
+        <label>場所</label>
+        <input type="text" id="f-place">
       </div>
       <div class="field">
         <label>食事・飲み物の内容</label>
-        <textarea id="f-food" rows="2" placeholder="ヨーグルトと果物"></textarea>
+        <textarea id="f-food" rows="2"></textarea>
       </div>
       <div class="field">
         <label>状況・気持ち（任意）</label>
-        <textarea id="f-feel" rows="2" placeholder="出かける前に少し食べ過ぎた気がする"></textarea>
+        <textarea id="f-feel" rows="2"></textarea>
       </div>
       <div class="field">
         <label>朝の体重 kg（任意）</label>
-        <input type="number" id="f-weight" step="0.1" min="0" placeholder="例: 58.4">
+        <input type="number" id="f-weight" step="0.1" min="0">
       </div>
       <label class="checkbox-row">
         <input type="checkbox" id="f-over">
@@ -474,7 +473,7 @@
     const dates = Object.keys(byDate).sort().reverse();
     content.innerHTML = dates.map(date=>{
       const items = byDate[date].map(e=>{
-        const overBadge = e.over ? '<span class="badge">食べ過ぎ⚠️</span>' : '';
+        const overBadge = e.over ? '<span class="badge">⚠️ 食べ過ぎ</span>' : '';
         const feel = e.feel ? '<p class="entry-feel">'+escapeHtml(e.feel)+'</p>' : '';
         const weight = (e.weight !== null && e.weight !== undefined && e.weight !== '') ? '<p class="entry-weight">体重: '+e.weight+' kg</p>' : '';
         const place = e.place ? ' · '+escapeHtml(e.place) : '';
