@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -325,20 +324,9 @@
     timeBuffer = '';
     this.value = '';
   });
-  timeField.addEventListener('keydown', function(e){
-    if(e.key >= '0' && e.key <= '9'){
-      e.preventDefault();
-      if(timeBuffer.length < 4){ timeBuffer += e.key; }
-      updateTimeDisplay();
-    } else if(e.key === 'Backspace'){
-      e.preventDefault();
-      timeBuffer = timeBuffer.slice(0, -1);
-      updateTimeDisplay();
-    } else if(e.key === 'Tab' || e.key === 'Enter'){
-      // 確定操作はそのまま許可
-    } else {
-      e.preventDefault();
-    }
+  timeField.addEventListener('input', function(){
+    timeBuffer = this.value.replace(/\D/g, '').slice(0, 4);
+    updateTimeDisplay();
   });
   timeField.addEventListener('blur', finalizeTime);
 
