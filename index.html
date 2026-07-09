@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -192,6 +193,8 @@
           <option value="お店">お店</option>
           <option value="外">外</option>
           <option value="友人宅">友人宅</option>
+          <option value="ホテル">ホテル</option>
+          <option value="その他">その他</option>
         </select>
       </div>
       <div class="field">
@@ -230,6 +233,14 @@
     </div>
     <div class="empty" id="list-empty" style="display:none;">まだ記録がありません。「Entry」から最初の一件を追加してください。</div>
     <div id="list-content"></div>
+
+    <div class="card" style="margin-top:1.5rem;">
+      <p style="font-size:13px;color:var(--text-secondary);margin:0 0 10px;">記録はこの端末だけに保存されています。機種変更やアプリの再インストールに備えて、時々バックアップを取っておくと安心です。</p>
+      <button class="btn" id="btn-export" style="margin-bottom:8px;">バックアップを書き出す</button>
+      <button class="btn" id="btn-import-trigger">バックアップから復元する</button>
+      <input type="file" id="btn-import" accept="application/json" style="display:none;">
+      <p class="save-msg" id="backup-msg"></p>
+    </div>
   </div>
 
   <div id="view-review" style="display:none;">
@@ -670,6 +681,61 @@
       errBox.textContent = '振り返りの生成に失敗しました。\n'+(e && e.message ? e.message : String(e));
     }
   };
+
+  document.getElementById('btn-export').onclick = function(){
+    const payload = {
+      exportedAt: new Date().toISOString(),
+      entries: entries,
+      reflections: reflections
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const d = new Date();
+    const stamp = d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');
+    a.href = url;
+    a.download = 'diet-backup-' + stamp + '.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    const msg = document.getElementById('backup-msg');
+    msg.style.color = 'var(--accent-text)';
+    msg.textContent = 'バックアップを書き出しました';
+    setTimeout(()=>{ msg.textContent=''; }, 2500);
+  };
+
+  document.getElementById('btn-import-trigger').onclick = function(){
+    document.getElementById('btn-import').click();
+  };
+  document.getElementById('btn-import').addEventListener('change', function(e){
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = async function(ev){
+      const msg = document.getElementById('backup-msg');
+      try{
+        const data = JSON.parse(ev.target.result);
+        if(!Array.isArray(data.entries)) throw new Error('形式が正しくありません');
+        const ok = confirm('現在のデータをバックアップの内容で置き換えます。よろしいですか？');
+        if(!ok) return;
+        entries = data.entries || [];
+        reflections = data.reflections || [];
+        await saveEntries();
+        await saveReflections();
+        renderCalendar();
+        renderList();
+        msg.style.color = 'var(--accent-text)';
+        msg.textContent = '復元しました（' + entries.length + '件）';
+      }catch(err){
+        msg.style.color = 'var(--danger)';
+        msg.textContent = '復元に失敗しました。ファイルを確認してください。';
+      }
+      setTimeout(()=>{ msg.textContent=''; }, 3000);
+      e.target.value = '';
+    };
+    reader.readAsText(file);
+  });
 
   Promise.all([loadEntries(), loadReflections()]).then(()=>{
     document.getElementById('f-time').value = lastUsedTime();
