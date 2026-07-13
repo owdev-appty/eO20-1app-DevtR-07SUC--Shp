@@ -208,6 +208,19 @@
         <label>朝の体重 kg（任意）</label>
         <input type="number" id="f-weight" step="0.1" min="0">
       </div>
+      <div class="field">
+        <label>運動（任意）</label>
+        <div class="row" style="align-items:center;">
+          <div style="display:flex;align-items:center;gap:6px;flex:1;">
+            <input type="number" id="f-exercise-h" min="0">
+            <span style="font-size:13px;color:var(--text-secondary);white-space:nowrap;">時間</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;flex:1;">
+            <input type="number" id="f-exercise-m" min="0" max="59">
+            <span style="font-size:13px;color:var(--text-secondary);white-space:nowrap;">分</span>
+          </div>
+        </div>
+      </div>
       <label class="checkbox-row">
         <input type="checkbox" id="f-over">
         ⚠️ 食べ過ぎた
@@ -395,6 +408,8 @@
     document.getElementById('f-food').value = '';
     document.getElementById('f-feel').value = '';
     document.getElementById('f-weight').value = '';
+    document.getElementById('f-exercise-h').value = '';
+    document.getElementById('f-exercise-m').value = '';
     document.getElementById('f-over').checked = false;
   };
 
@@ -405,6 +420,8 @@
     document.getElementById('f-food').value = entry.food;
     document.getElementById('f-feel').value = entry.feel;
     document.getElementById('f-weight').value = entry.weight != null ? entry.weight : '';
+    document.getElementById('f-exercise-h').value = entry.exerciseH != null ? entry.exerciseH : '';
+    document.getElementById('f-exercise-m').value = entry.exerciseM != null ? entry.exerciseM : '';
     document.getElementById('f-over').checked = entry.over;
   }
 
@@ -434,6 +451,10 @@
     const feel = document.getElementById('f-feel').value || '';
     const weightRaw = document.getElementById('f-weight').value;
     const weight = weightRaw !== '' ? parseFloat(weightRaw) : null;
+    const exHRaw = document.getElementById('f-exercise-h').value;
+    const exMRaw = document.getElementById('f-exercise-m').value;
+    const exerciseH = exHRaw !== '' ? parseInt(exHRaw, 10) : null;
+    const exerciseM = exMRaw !== '' ? parseInt(exMRaw, 10) : null;
     const over = document.getElementById('f-over').checked;
     const msg = document.getElementById('save-msg');
 
@@ -446,14 +467,14 @@
     if(editingId){
       const idx = entries.findIndex(e=>e.id===editingId);
       if(idx !== -1){
-        entries[idx] = { id: editingId, date, time, place, food, feel, weight, over };
+        entries[idx] = { id: editingId, date, time, place, food, feel, weight, exerciseH, exerciseM, over };
       }
       await saveEntries();
       resetFormMode();
       msg.style.color = 'var(--accent-text)';
       msg.textContent = '更新しました';
     } else {
-      entries.push({ id: Date.now().toString(36), date, time, place, food, feel, weight, over });
+      entries.push({ id: Date.now().toString(36), date, time, place, food, feel, weight, exerciseH, exerciseM, over });
       await saveEntries();
       msg.style.color = 'var(--accent-text)';
       msg.textContent = '保存しました';
@@ -462,6 +483,8 @@
     document.getElementById('f-food').value = '';
     document.getElementById('f-feel').value = '';
     document.getElementById('f-weight').value = '';
+    document.getElementById('f-exercise-h').value = '';
+    document.getElementById('f-exercise-m').value = '';
     document.getElementById('f-over').checked = false;
     document.getElementById('f-time').value = lastUsedTime();
     setTimeout(()=>{ msg.textContent=''; }, 2000);
@@ -546,6 +569,7 @@
         const overBadge = e.over ? '<span class="badge">⚠️ 食べ過ぎ</span>' : '';
         const feel = e.feel ? '<p class="entry-feel">'+escapeHtml(e.feel)+'</p>' : '';
         const weight = (e.weight !== null && e.weight !== undefined && e.weight !== '') ? '<p class="entry-weight">体重: '+e.weight+' kg</p>' : '';
+        const exercise = (e.exerciseH || e.exerciseM) ? '<p class="entry-weight">運動: '+(e.exerciseH||0)+'時間'+(e.exerciseM||0)+'分</p>' : '';
         const place = e.place ? ' · '+escapeHtml(e.place) : '';
         return '<div class="entry" data-id="'+e.id+'">'
           +'<div class="entry-top">'
@@ -553,7 +577,7 @@
             +'<div class="entry-actions">'+overBadge+'<button class="edit" data-id="'+e.id+'">編集</button><button class="delete" data-id="'+e.id+'">削除</button></div>'
           +'</div>'
           +'<p class="entry-food">'+escapeHtml(e.food)+'</p>'
-          +feel+weight
+          +feel+weight+exercise
           +'</div>';
       }).join('');
       return '<div class="day-group">'
@@ -630,7 +654,7 @@
     }
     loading.style.display = 'block';
     const lines = inRange.slice().sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time))
-      .map(e=> e.date+' '+e.time+' | '+(e.place||'場所不明')+' | '+e.food+(e.over?' [食べ過ぎと感じた]':'')+(e.feel?' | 状況: '+e.feel:'')+((e.weight!==null&&e.weight!==undefined)?' | 体重: '+e.weight+'kg':''))
+      .map(e=> e.date+' '+e.time+' | '+(e.place||'場所不明')+' | '+e.food+(e.over?' [食べ過ぎと感じた]':'')+(e.feel?' | 状況: '+e.feel:'')+((e.weight!==null&&e.weight!==undefined)?' | 体重: '+e.weight+'kg':'')+((e.exerciseH||e.exerciseM)?' | 運動: '+(e.exerciseH||0)+'時間'+(e.exerciseM||0)+'分':''))
       .join('\n');
 
     const prompt = '以下は個人の食事セルフモニタリング記録です（'+from+'〜'+to+'）。ダイエット（減量・食習慣改善）を目的とした記録です。体重の記録がある場合は参考情報として扱ってください。\n\n'
