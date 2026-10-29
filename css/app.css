@@ -218,8 +218,8 @@ details.more .more-body{padding:2px 0 8px;}
 .lrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 0;border-top:1px solid var(--border);font-size:15px;}
 .lrow:first-child{border-top:none;}
 .lrow .v{color:var(--text-2);font-size:14px;text-align:right;}
-.lrow input[type=time]{width:104px;padding:6px 8px;font-size:15px;text-align:center;}
-.lrow select{width:auto;padding:6px 8px;font-size:15px;}
+.lrow input[type=time]{width:110px;padding:6px 8px;font-size:16px;text-align:center;}
+.lrow select{width:auto;padding:6px 8px;font-size:16px;}
 .lrow.go{cursor:pointer;}
 .lrow.go::after{content:"›";color:var(--muted);font-size:20px;line-height:1;margin-left:4px;}
 .slot-row{display:flex;align-items:center;gap:10px;}

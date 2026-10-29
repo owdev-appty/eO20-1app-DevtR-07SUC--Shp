@@ -1,7 +1,7 @@
 // 画面の部品。計算は logic.js、保存は store.js に任せる。
 
-import * as L from './logic.js?v=20261029b';
-import { createStore, prefixFor } from './store.js?v=20261029b';
+import * as L from './logic.js?v=20261029c';
+import { createStore, prefixFor } from './store.js?v=20261029c';
 
 // ---------- 準備 ----------
 function memoryStorage() {

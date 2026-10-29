@@ -1,6 +1,6 @@
 // 端末への保存（localStorage）。storage を外から渡すので、自動テストでは偽物に差し替えられる。
 
-import { defaultData, normalizeData, STORAGE_LIMIT_BYTES } from './logic.js?v=20261029b';
+import { defaultData, normalizeData, STORAGE_LIMIT_BYTES } from './logic.js?v=20261029c';
 
 const PROD_HOST = 'owdev-appty.github.io';
 const PROD_PATH = '/eO20-1app-DevtR-07SUC--Shp/';
