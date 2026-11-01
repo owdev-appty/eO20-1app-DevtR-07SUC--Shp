@@ -1,7 +1,7 @@
 // 画面の部品。計算は logic.js、保存は store.js に任せる。
 
-import * as L from './logic.js?v=20261029c';
-import { createStore, prefixFor } from './store.js?v=20261029c';
+import * as L from './logic.js?v=20261101a';
+import { createStore, prefixFor } from './store.js?v=20261101a';
 
 // ---------- 準備 ----------
 function memoryStorage() {
@@ -46,7 +46,6 @@ const ui = {
   heatKind: 'extra',
   calMonth: null,
   calSel: null,
-  onbStep: 1,
   brokenNotice: loaded.status === 'broken',
 };
 let sheet = null;
@@ -139,16 +138,6 @@ function slotRowsHtml() {
   }).join('');
 }
 function renderOnboarding() {
-  if (ui.onbStep === 1) {
-    return '<div class="onb">'
-      + '<h1>はじめに</h1>'
-      + '<p>このアプリは、食べることを「止める」ためではなく、<b>崩れにくくして、崩れても戻りやすくする</b>ためのものです。</p>'
-      + '<p>食事の予定を決めて記録し、週に1回ふりかえります。カロリーや量を入力する必要はありません。記録しない日があっても大丈夫です。</p>'
-      + '<p>最初の14日間は、今の状態を知るための期間です。いつもどおり過ごして、記録してみてください。</p>'
-      + '<button class="btn primary" data-action="onb-next">はじめる</button>'
-      + '<p class="kind"><button class="link" data-action="restore">バックアップから復元する</button></p>'
-      + '</div>';
-  }
   return '<div class="onb">'
     + '<h1>食事の予定</h1>'
     + '<p>ふだん食べたい時刻を決めます。使わない食事はオフにできます。あとから「記録・設定」で変えられます。</p>'
@@ -156,7 +145,7 @@ function renderOnboarding() {
     + '<p class="hint">予定の時刻の前後1時間以内に食べたら「予定どおり」と数えます。</p>'
     + '<div style="height:12px"></div>'
     + '<button class="btn primary" data-action="onb-done">この予定で始める</button>'
-    + '<button class="btn" data-action="onb-back">戻る</button>'
+    + '<p class="kind"><button class="link" data-action="restore">バックアップから復元する</button></p>'
     + '</div>';
 }
 
@@ -683,11 +672,8 @@ function openSafety() {
   sheet = { kind: 'safety' };
   openSheet('<div class="sheet-head"><h2>安全のための情報</h2><button class="link" data-action="close-sheet">閉じる</button></div>'
     + '<div class="card"><p style="margin:0 0 10px;font-size:14px;">このアプリは食習慣を整えるための道具で、診断や治療をするものではありません。</p>'
-    + '<p style="margin:0 0 6px;font-size:14px;">次のようなことが続くときは、ひとりで抱えずに相談できる場所があります。</p>'
-    + '<ul class="ul"><li>食べたあとに吐く、下剤を使う</li><li>丸1日以上なにも食べない</li><li>消えてしまいたい気持ちが強い</li><li>めまい・失神など体の症状がある</li></ul></div>'
-    + '<div class="card list-card">'
-    + '<a class="lrow go" style="color:inherit;text-decoration:none;" href="https://www.mhlw.go.jp/mamorouyokokoro/" target="_blank" rel="noopener"><span class="lab">まもろうよ こころ<small>厚生労働省の相談窓口の案内</small></span></a>'
-    + '<a class="lrow go" style="color:inherit;text-decoration:none;" href="https://www.edportal.jp/" target="_blank" rel="noopener"><span class="lab">摂食障害情報ポータルサイト<small>国立精神・神経医療研究センター</small></span></a></div>');
+    + '<p style="margin:0 0 6px;font-size:14px;">次のようなことが続くときは、ひとりで抱えずに、誰かに相談することを考えてみてください。</p>'
+    + '<ul class="ul"><li>食べたあとに吐く、下剤を使う</li><li>丸1日以上なにも食べない</li><li>消えてしまいたい気持ちが強い</li><li>めまい・失神など体の症状がある</li></ul></div>');
 }
 
 // ---------- シート・トースト ----------
@@ -728,8 +714,6 @@ function confirmTwice(btn) {
 const actions = {
   'close-sheet': () => closeSheet(),
   'dismiss-broken': () => { ui.brokenNotice = false; render(); },
-  'onb-next': () => { ui.onbStep = 2; render(); },
-  'onb-back': () => { ui.onbStep = 1; render(); },
   'onb-done': () => {
     if (commit((d) => { d.settings.onboarded = true; d.settings.baselineStart = today(); })) { ui.tab = 'today'; render(); }
   },
